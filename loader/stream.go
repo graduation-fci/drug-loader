@@ -18,16 +18,15 @@ type jsonStream struct {
 }
 
 func NewJsonStream() *jsonStream {
-	return &jsonStream{
-		stream: make(chan Element),
-	}
+	return &jsonStream{}
 }
 
 func (j jsonStream) Watch() <-chan Element {
 	return j.stream
 }
 
-func (j jsonStream) Start(path string) {
+func (j *jsonStream) Start(path string) {
+	j.stream = make(chan Element)
 	defer close(j.stream)
 	jsonFile, err := os.Open(path)
 	if err != nil {
