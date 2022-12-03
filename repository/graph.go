@@ -2,7 +2,7 @@ package repository
 
 import (
 	"context"
-	"fmt"
+	"log"
 
 	"github.com/graduation-fci/phase1-demo/dependencies"
 	"github.com/graduation-fci/phase1-demo/model"
@@ -23,7 +23,7 @@ func (d DrugRepository) InsetNode(name string) {
 	ctx := context.TODO()
 	session := d.graph.NewSession(ctx, neo4j.SessionConfig{})
 	defer session.Close(ctx)
-	result, err := session.ExecuteWrite(ctx, func(tx neo4j.ManagedTransaction) (any, error) {
+	_, err := session.ExecuteWrite(ctx, func(tx neo4j.ManagedTransaction) (any, error) {
 		records, err := tx.Run(ctx, "CREATE (n:Drug {name: $name }) RETURN n.name", map[string]any{
 			"name": name,
 		})
@@ -38,8 +38,11 @@ func (d DrugRepository) InsetNode(name string) {
 			Name: record.Values[0].(string),
 		}, nil
 	})
-
-	fmt.Println(result, err)
+	if err != nil {
+		log.Println("Error while insertion; err: ", err)
+		return
+	}
+	log.Println("INSERTED " + name + " AS AN EDGE")
 }
 
 func (d DrugRepository) BuildRelations(drug *model.Drug) {
