@@ -15,13 +15,11 @@ type Element struct {
 
 type jsonStream struct {
 	stream chan Element
-	path   string
 }
 
-func NewJsonStream(path string) *jsonStream {
+func NewJsonStream() *jsonStream {
 	return &jsonStream{
 		stream: make(chan Element),
-		path:   path,
 	}
 }
 
@@ -29,9 +27,9 @@ func (j jsonStream) Watch() <-chan Element {
 	return j.stream
 }
 
-func (j jsonStream) Pipeline() {
+func (j jsonStream) Start(path string) {
 	defer close(j.stream)
-	jsonFile, err := os.Open(j.path)
+	jsonFile, err := os.Open(path)
 	if err != nil {
 		j.stream <- Element{Error: fmt.Errorf("can't open file: %w", err)}
 		return
