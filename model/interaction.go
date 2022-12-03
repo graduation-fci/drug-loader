@@ -6,7 +6,7 @@ type Interaction struct {
 	Effect string `json:"effect"`
 }
 
-type ActiveIngredient struct {
+type Drug struct {
 	Name         string        `json:"name"`
 	Interactions []Interaction `json:"interactions"`
 }
