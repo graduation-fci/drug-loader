@@ -2,9 +2,11 @@ package loader
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/graduation-fci/phase1-demo/dependencies"
 	"github.com/graduation-fci/phase1-demo/repository"
+	"github.com/graduation-fci/phase1-demo/service"
 )
 
 type pipeline struct {
@@ -41,5 +43,21 @@ func (p pipeline) LoadEdges() {
 		done <- struct{}{}
 	}()
 	p.stream.Start("input/mappings.json")
+	<-done
+}
+
+func (p pipeline) ExtractInteractions() {
+	done := make(chan struct{}, 1)
+	extractor := service.NewExtractor("output/mappings.json")
+	defer extractor.Exit()
+	go func() {
+		for message := range p.stream.Watch() {
+			extractor.Interactions(message.Drug)
+			time.Sleep(time.Duration(time.Second * 3))
+		}
+		done <- struct{}{}
+	}()
+
+	p.stream.Start("input/drugs.json")
 	<-done
 }

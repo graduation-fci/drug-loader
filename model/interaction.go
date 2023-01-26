@@ -8,5 +8,6 @@ type Interaction struct {
 
 type Drug struct {
 	Name         string        `json:"name"`
+	Url          string        `json:"url,omitempty"`
 	Interactions []Interaction `json:"interactions"`
 }

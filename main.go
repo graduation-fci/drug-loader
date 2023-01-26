@@ -11,6 +11,7 @@ func main() {
 
 	pipeline := loader.NewPipeline(dp)
 
-	pipeline.LoadNodes()
-	pipeline.LoadEdges()
+	// pipeline.LoadNodes()
+	// pipeline.LoadEdges()
+	pipeline.ExtractInteractions()
 }
