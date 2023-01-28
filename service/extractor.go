@@ -11,6 +11,11 @@ import (
 	"github.com/graduation-fci/phase1-demo/model"
 )
 
+const (
+	PageTypeProfessional = "professional"
+	PageTypeConsumer     = "consumer"
+)
+
 type Extractor struct {
 	fd *os.File
 }
@@ -75,17 +80,40 @@ func (ext Extractor) Interactions(drug model.Drug) {
 			drugs = ext.interactionList(".ddc-list-unstyled", contentBox)
 		}
 		for _, drug := range drugs {
-			detialsWorker.Request("GET", drug.Url, nil, contentBox.Request.Ctx, nil)
-			detialsWorker.Request("GET", drug.Url+"?professional=1", nil, contentBox.Request.Ctx, nil)
+			detialsWorker.Request("GET", drug.Url+"?drugName="+drug.Name, nil, contentBox.Request.Ctx, nil)
+			detialsWorker.Request("GET", drug.Url+"?professional=1&drugName="+drug.Name, nil, contentBox.Request.Ctx, nil)
 		}
 		time.Sleep(time.Duration(time.Second * 2))
 	})
-
-	// detialsWorker.OnHTML(".contentBox ")
+	var publicInteractions []model.Interaction
+	var professionalInteractions []model.Interaction
+	detialsWorker.OnHTML(".contentBox .interactions-reference-wrapper", func(interactionsWrapper *colly.HTMLElement) {
+		interactionsWrapper.ForEach(".interactions-reference", func(i int, interaction *colly.HTMLElement) {
+			drugName := interactionsWrapper.Request.URL.Query()["drugName"]
+			if _, ok := interactionsWrapper.Request.URL.Query()[PageTypeProfessional]; ok {
+				professionalInteractions = append(professionalInteractions, model.Interaction{
+					Name:               drugName[0],
+					HashedName:         InteractionName(interaction),
+					Level:              interaction.ChildText(".ddc-status-label"),
+					ProfessionalEffect: EffectDescription(interaction),
+				})
+			} else {
+				publicInteractions = append(publicInteractions, model.Interaction{
+					HashedName:     InteractionName(interaction),
+					Level:          interaction.ChildText(".ddc-status-label"),
+					ConsumerEffect: EffectDescription(interaction),
+				})
+			}
+		})
+	})
 
 	err := mainWorker.Visit(drug.Url)
 	if err != nil {
 		log.Fatalln("error occured", err)
+	}
+
+	for idx := range publicInteractions {
+		publicInteractions[idx].ProfessionalEffect = professionalInteractions[idx].ProfessionalEffect
 	}
 }
 
