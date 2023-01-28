@@ -5,7 +5,7 @@ type Interaction struct {
 	HashedName         string `json:"hashedName"`
 	Level              string `json:"level"`
 	ConsumerEffect     string `json:"consumerEffect"`
-	ProfessionalEffect string `json:"ProfessionalEffect"`
+	ProfessionalEffect string `json:"professionalEffect"`
 }
 
 type Drug struct {
