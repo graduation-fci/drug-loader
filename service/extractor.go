@@ -83,23 +83,25 @@ func (ext Extractor) Interactions(drug model.Drug) []model.Interaction {
 			drugs = ext.interactionList(".ddc-list-unstyled", contentBox)
 		}
 		for _, drugInstance := range drugs {
-			detialsWorker.Request("GET", drugInstance.Url+"?drugName="+drugInstance.Name, nil, contentBox.Request.Ctx, nil)
-			detialsWorker.Request("GET", drugInstance.Url+"?professional=1&drugName="+drugInstance.Name, nil, contentBox.Request.Ctx, nil)
+			drugName := strings.Join(strings.Fields(drugInstance.Name), "-")
+			detialsWorker.Request("GET", drugInstance.Url+"?drugName="+drugName, nil, contentBox.Request.Ctx, nil)
+			detialsWorker.Request("GET", drugInstance.Url+"?professional=1&drugName="+drugName, nil, contentBox.Request.Ctx, nil)
 		}
 		time.Sleep(time.Duration(time.Second * 2))
 	})
 	var publicInteractions []model.Interaction
 	var professionalInteractions []model.Interaction
 	detialsWorker.OnHTML(".contentBox .interactions-reference-wrapper", func(interactionsWrapper *colly.HTMLElement) {
+		drugNameQuery := interactionsWrapper.Request.URL.Query()["drugName"]
+		drugName := strings.Join(strings.Split(drugNameQuery[0], "-"), " ")
 		interactionsWrapper.ForEach(".interactions-reference", func(i int, interaction *colly.HTMLElement) {
-			drugName := interactionsWrapper.Request.URL.Query()["drugName"]
 			if _, ok := interactionsWrapper.Request.URL.Query()[PageTypeProfessional]; ok {
 				professionalInteractions = append(professionalInteractions, model.Interaction{
 					ProfessionalEffect: EffectDescription(interaction),
 				})
 			} else {
 				publicInteractions = append(publicInteractions, model.Interaction{
-					Name:           drugName[0],
+					Name:           drugName,
 					HashedName:     InteractionName(interaction),
 					Level:          interaction.ChildText(".ddc-status-label"),
 					ConsumerEffect: EffectDescription(interaction),
@@ -117,6 +119,7 @@ func (ext Extractor) Interactions(drug model.Drug) []model.Interaction {
 		publicInteractions[idx].ProfessionalEffect = professionalInteractions[idx].ProfessionalEffect
 	}
 
+	log.Println("finished")
 	return publicInteractions
 }
 

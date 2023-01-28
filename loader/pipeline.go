@@ -56,7 +56,7 @@ func (p pipeline) ExtractInteractions() {
 			interactions := extractor.Interactions(drug)
 			drug.Interactions = interactions
 			extractor.WriteToDisk(&drug)
-			time.Sleep(time.Duration(time.Second * 30))
+			time.Sleep(time.Duration(time.Second * 10))
 		}
 		done <- struct{}{}
 	}()
