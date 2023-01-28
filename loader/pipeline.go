@@ -52,8 +52,11 @@ func (p pipeline) ExtractInteractions() {
 	defer extractor.Exit()
 	go func() {
 		for message := range p.stream.Watch() {
-			extractor.Interactions(message.Drug)
-			time.Sleep(time.Duration(time.Second * 10))
+			drug := message.Drug
+			interactions := extractor.Interactions(drug)
+			drug.Interactions = interactions
+			extractor.WriteToDisk(&drug)
+			time.Sleep(time.Duration(time.Second * 30))
 		}
 		done <- struct{}{}
 	}()

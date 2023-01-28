@@ -1,6 +1,7 @@
 package service
 
 import (
+	"encoding/json"
 	"log"
 	"os"
 	"strings"
@@ -33,6 +34,11 @@ func (e *Extractor) createFd(fileName string) {
 		return
 	}
 	e.fd = file
+}
+
+func (e *Extractor) WriteToDisk(drug *model.Drug) {
+	bytes, _ := json.Marshal(drug)
+	e.fd.Write(bytes)
 }
 
 func (e *Extractor) Exit() {
@@ -89,13 +95,11 @@ func (ext Extractor) Interactions(drug model.Drug) []model.Interaction {
 			drugName := interactionsWrapper.Request.URL.Query()["drugName"]
 			if _, ok := interactionsWrapper.Request.URL.Query()[PageTypeProfessional]; ok {
 				professionalInteractions = append(professionalInteractions, model.Interaction{
-					Name:               drugName[0],
-					HashedName:         InteractionName(interaction),
-					Level:              interaction.ChildText(".ddc-status-label"),
 					ProfessionalEffect: EffectDescription(interaction),
 				})
 			} else {
 				publicInteractions = append(publicInteractions, model.Interaction{
+					Name:           drugName[0],
 					HashedName:     InteractionName(interaction),
 					Level:          interaction.ChildText(".ddc-status-label"),
 					ConsumerEffect: EffectDescription(interaction),
