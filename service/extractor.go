@@ -35,7 +35,7 @@ func (e *Extractor) Exit() {
 	e.fd.Close()
 }
 
-func (ex Extractor) Interactions(drug model.Drug) {
+func (ext Extractor) Interactions(drug model.Drug) {
 	fmt.Println("Starting", drug.Name)
 
 	mainWorker := colly.NewCollector(
@@ -63,23 +63,38 @@ func (ex Extractor) Interactions(drug model.Drug) {
 		}
 	})
 
-	interactionsWorker.OnHTML(`#container #contentWrap #content .contentBox`, func(e1 *colly.HTMLElement) {
-		alphabeticsCount := false
-		e1.ForEachWithBreak(".col-list-az", func(_ int, h *colly.HTMLElement) bool {
-			alphabeticsCount = true
-			return true
-		})
+	var drugs []model.Drug
+
+	interactionsWorker.OnHTML(`#container #contentWrap #content .contentBox`, func(contentBox *colly.HTMLElement) {
+		if contentBox.DOM.Find(".col-list-az").Length() > 0 {
+			drugs = ext.interactionList(".ddc-list-column-2", contentBox)
+			return
+		}
+		drugs = ext.interactionList(".ddc-list-unstyled", contentBox)
 		time.Sleep(time.Duration(time.Second * 2))
 	})
-
-	// interactionsWorker.OnHTML(`#container #contentWrap #content .contentBox .ddc-list-unstyled`, func(e1 *colly.HTMLElement) {
-	// 	e1.ForEach("li", func(_ int, e2 *colly.HTMLElement) {
-	// 		log.Println(e2.Text)
-	// 	})
-	// })
 
 	err := mainWorker.Visit(drug.Url)
 	if err != nil {
 		log.Fatalln("error occured", err)
 	}
+}
+
+func (ex Extractor) interactionList(selector string, boxElement *colly.HTMLElement) []model.Drug {
+	var drugs []model.Drug
+	boxElement.ForEach(selector, func(i int, drugParentDiv *colly.HTMLElement) {
+		if drugParentDiv.DOM.HasClass("interactions-label") {
+			return
+		}
+		drugParentDiv.ForEach("li", func(j int, drugInteraction *colly.HTMLElement) {
+			drug := model.Drug{
+				Name: drugInteraction.ChildText("a"),
+				Url:  "https://www.drugs.com" + drugInteraction.ChildAttr("a", "href"),
+			}
+			drugs = append(drugs, drug)
+			log.Println("found drug ", drug.Name, drug.Url)
+		})
+	})
+
+	return drugs
 }
