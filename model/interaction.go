@@ -1,9 +1,10 @@
 package model
 
 type Interaction struct {
-	Name   string `json:"name"`
-	Level  string `json:"level"`
-	Effect string `json:"effect"`
+	Name               string `json:"name"`
+	Level              string `json:"level"`
+	ConsumerEffect     string `json:"consumerEffect"`
+	ProfessionalEffect string `json:"ProfessionalEffect"`
 }
 
 type Drug struct {

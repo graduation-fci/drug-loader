@@ -52,10 +52,11 @@ func (d DrugRepository) BuildRelations(drug *model.Drug) {
 	for i, interaction := range drug.Interactions {
 		_, err := session.ExecuteWrite(ctx, func(tx neo4j.ManagedTransaction) (any, error) {
 			records, err := tx.Run(ctx, "MATCH (a:Drug {name: $src}) MATCH(b:Drug {name: $dest}) CREATE (a)-[rel:INTERACTS {effect: $effect, level: $level}]->(b) RETURN a.name", map[string]any{
-				"src":    drug.Name,
-				"dest":   interaction.Name,
-				"effect": interaction.Effect,
-				"level":  interaction.Level,
+				"src":                drug.Name,
+				"dest":               interaction.Name,
+				"consumerEffect":     interaction.ConsumerEffect,
+				"professionalEffect": interaction.ProfessionalEffect,
+				"level":              interaction.Level,
 			})
 			if err != nil {
 				return nil, err

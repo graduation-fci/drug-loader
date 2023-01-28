@@ -49,7 +49,12 @@ func (ext Extractor) Interactions(drug model.Drug) {
 
 	interactionsWorker := mainWorker.Clone()
 	interactionsWorker.OnRequest(func(r *colly.Request) {
-		log.Println("Visited details interactions", r.URL)
+		log.Println("Visiting list of interactions", r.URL)
+	})
+
+	detialsWorker := mainWorker.Clone()
+	detialsWorker.OnRequest(func(r *colly.Request) {
+		log.Println("Visiting interaction details", r.URL)
 	})
 
 	mainWorker.OnHTML("a[href]", func(e *colly.HTMLElement) {
@@ -57,22 +62,26 @@ func (ext Extractor) Interactions(drug model.Drug) {
 			prefixs := strings.Split(e.Attr("href"), "/")
 			file := strings.Split(prefixs[len(prefixs)-1], ".html")
 			interactionsUrl := "https://www.drugs.com/drug-interactions/" + file[0] + "-index.html"
-			log.Println("Visiting", interactionsUrl)
 			interactionsWorker.Request("GET", interactionsUrl, nil, e.Request.Ctx, nil)
 			time.Sleep(time.Duration(time.Second * 2))
 		}
 	})
 
-	var drugs []model.Drug
-
-	interactionsWorker.OnHTML(`#container #contentWrap #content .contentBox`, func(contentBox *colly.HTMLElement) {
+	interactionsWorker.OnHTML(`.contentBox`, func(contentBox *colly.HTMLElement) {
+		var drugs []model.Drug
 		if contentBox.DOM.Find(".col-list-az").Length() > 0 {
 			drugs = ext.interactionList(".ddc-list-column-2", contentBox)
-			return
+		} else {
+			drugs = ext.interactionList(".ddc-list-unstyled", contentBox)
 		}
-		drugs = ext.interactionList(".ddc-list-unstyled", contentBox)
+		for _, drug := range drugs {
+			detialsWorker.Request("GET", drug.Url, nil, contentBox.Request.Ctx, nil)
+			detialsWorker.Request("GET", drug.Url+"?professional=1", nil, contentBox.Request.Ctx, nil)
+		}
 		time.Sleep(time.Duration(time.Second * 2))
 	})
+
+	// detialsWorker.OnHTML(".contentBox ")
 
 	err := mainWorker.Visit(drug.Url)
 	if err != nil {
