@@ -1,7 +1,6 @@
 package service
 
 import (
-	"fmt"
 	"log"
 	"os"
 	"strings"
@@ -40,9 +39,7 @@ func (e *Extractor) Exit() {
 	e.fd.Close()
 }
 
-func (ext Extractor) Interactions(drug model.Drug) {
-	fmt.Println("Starting", drug.Name)
-
+func (ext Extractor) Interactions(drug model.Drug) []model.Interaction {
 	mainWorker := colly.NewCollector(
 		colly.AllowedDomains("www.drugs.com"),
 		colly.CacheDir("./cache"),
@@ -79,9 +76,9 @@ func (ext Extractor) Interactions(drug model.Drug) {
 		} else {
 			drugs = ext.interactionList(".ddc-list-unstyled", contentBox)
 		}
-		for _, drug := range drugs {
-			detialsWorker.Request("GET", drug.Url+"?drugName="+drug.Name, nil, contentBox.Request.Ctx, nil)
-			detialsWorker.Request("GET", drug.Url+"?professional=1&drugName="+drug.Name, nil, contentBox.Request.Ctx, nil)
+		for _, drugInstance := range drugs {
+			detialsWorker.Request("GET", drugInstance.Url+"?drugName="+drugInstance.Name, nil, contentBox.Request.Ctx, nil)
+			detialsWorker.Request("GET", drugInstance.Url+"?professional=1&drugName="+drugInstance.Name, nil, contentBox.Request.Ctx, nil)
 		}
 		time.Sleep(time.Duration(time.Second * 2))
 	})
@@ -115,6 +112,8 @@ func (ext Extractor) Interactions(drug model.Drug) {
 	for idx := range publicInteractions {
 		publicInteractions[idx].ProfessionalEffect = professionalInteractions[idx].ProfessionalEffect
 	}
+
+	return publicInteractions
 }
 
 func (ex Extractor) interactionList(selector string, boxElement *colly.HTMLElement) []model.Drug {
