@@ -53,7 +53,7 @@ func (p pipeline) ExtractInteractions() {
 	go func() {
 		for message := range p.stream.Watch() {
 			extractor.Interactions(message.Drug)
-			time.Sleep(time.Duration(time.Second * 3))
+			time.Sleep(time.Duration(time.Second * 10))
 		}
 		done <- struct{}{}
 	}()

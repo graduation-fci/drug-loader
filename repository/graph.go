@@ -54,6 +54,7 @@ func (d DrugRepository) BuildRelations(drug *model.Drug) {
 			records, err := tx.Run(ctx, "MATCH (a:Drug {name: $src}) MATCH(b:Drug {name: $dest}) CREATE (a)-[rel:INTERACTS {effect: $effect, level: $level}]->(b) RETURN a.name", map[string]any{
 				"src":                drug.Name,
 				"dest":               interaction.Name,
+				"hashedName":         interaction.HashedName,
 				"consumerEffect":     interaction.ConsumerEffect,
 				"professionalEffect": interaction.ProfessionalEffect,
 				"level":              interaction.Level,
