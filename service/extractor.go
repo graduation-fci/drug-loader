@@ -33,15 +33,18 @@ func (e *Extractor) createFd(fileName string) {
 		log.Fatalf("Cannot create file %q: %s\n", fileName, err)
 		return
 	}
+	file.WriteString("[")
 	e.fd = file
 }
 
 func (e *Extractor) WriteToDisk(drug *model.Drug) {
 	bytes, _ := json.Marshal(drug)
 	e.fd.Write(bytes)
+	e.fd.WriteString(", \n")
 }
 
 func (e *Extractor) Exit() {
+	e.fd.WriteString("]")
 	e.fd.Close()
 }
 
