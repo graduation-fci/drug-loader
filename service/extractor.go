@@ -5,7 +5,6 @@ import (
 	"log"
 	"os"
 	"strings"
-	"time"
 
 	"github.com/gocolly/colly"
 	"github.com/graduation-fci/phase1-demo/model"
@@ -74,7 +73,6 @@ func (ext Extractor) Interactions(drug model.Drug) []model.Interaction {
 			file := strings.Split(prefixs[len(prefixs)-1], ".html")
 			interactionsUrl := "https://www.drugs.com/drug-interactions/" + file[0] + "-index.html"
 			interactionsWorker.Request("GET", interactionsUrl, nil, e.Request.Ctx, nil)
-			time.Sleep(time.Duration(time.Second * 2))
 		}
 	})
 
@@ -90,7 +88,6 @@ func (ext Extractor) Interactions(drug model.Drug) []model.Interaction {
 			detialsWorker.Request("GET", drugInstance.Url+"?drugName="+drugName, nil, contentBox.Request.Ctx, nil)
 			detialsWorker.Request("GET", drugInstance.Url+"?professional=1&drugName="+drugName, nil, contentBox.Request.Ctx, nil)
 		}
-		time.Sleep(time.Duration(time.Second * 2))
 	})
 	var publicInteractions []model.Interaction
 	var professionalInteractions []model.Interaction

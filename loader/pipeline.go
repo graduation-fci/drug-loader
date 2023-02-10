@@ -2,7 +2,6 @@ package loader
 
 import (
 	"fmt"
-	"time"
 
 	"github.com/graduation-fci/phase1-demo/dependencies"
 	"github.com/graduation-fci/phase1-demo/repository"
@@ -56,7 +55,6 @@ func (p pipeline) ExtractInteractions() {
 			interactions := extractor.Interactions(drug)
 			drug.Interactions = interactions
 			extractor.WriteToDisk(&drug)
-			time.Sleep(time.Duration(time.Second * 10))
 		}
 		done <- struct{}{}
 	}()

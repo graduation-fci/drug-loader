@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"log"
+	"strings"
 
 	"github.com/graduation-fci/phase1-demo/dependencies"
 	"github.com/graduation-fci/phase1-demo/model"
@@ -42,18 +43,18 @@ func (d DrugRepository) InsetNode(name string) {
 		log.Println("Error while insertion; err: ", err)
 		return
 	}
-	log.Println("INSERTED " + name + " AS AN EDGE")
+	log.Println("INSERTED " + name + " AS AN NODE")
 }
 
 func (d DrugRepository) BuildRelations(drug *model.Drug) {
 	ctx := context.TODO()
 	session := d.graph.NewSession(ctx, neo4j.SessionConfig{})
 	defer session.Close(ctx)
-	for i, interaction := range drug.Interactions {
+	for _, interaction := range drug.Interactions {
 		_, err := session.ExecuteWrite(ctx, func(tx neo4j.ManagedTransaction) (any, error) {
-			records, err := tx.Run(ctx, "MATCH (a:Drug {name: $src}) MATCH(b:Drug {name: $dest}) CREATE (a)-[rel:INTERACTS {effect: $effect, level: $level}]->(b) RETURN a.name", map[string]any{
-				"src":                drug.Name,
-				"dest":               interaction.Name,
+			records, err := tx.Run(ctx, "MATCH (a:Drug {name: $src}) MATCH(b:Drug {name: $dest}) CREATE (a)-[rel:INTERACTS {consumerEffect: $consumerEffect, professionalEffect: $professionalEffect, hashedName: $hashedName, level: $level}]->(b) RETURN a.name", map[string]any{
+				"src":                strings.ToLower(drug.Name),
+				"dest":               strings.ToLower(interaction.Name),
 				"hashedName":         interaction.HashedName,
 				"consumerEffect":     interaction.ConsumerEffect,
 				"professionalEffect": interaction.ProfessionalEffect,
@@ -71,7 +72,16 @@ func (d DrugRepository) BuildRelations(drug *model.Drug) {
 			}, nil
 		})
 		if err != nil {
-			log.Printf("Error while building relation %d ; err: %s \n", i, err)
+			log.Println("$src", strings.ToLower(drug.Name), "$dest", strings.ToLower(interaction.Name))
+			log.Println("Inserting Node and retrying")
+			d.InsetNode(strings.ToLower(interaction.Name))
+			retryDrug := &model.Drug{
+				Name: drug.Name,
+				Interactions: []model.Interaction{
+					interaction,
+				},
+			}
+			d.BuildRelations(retryDrug)
 		}
 	}
 }
