@@ -13,5 +13,6 @@ func main() {
 
 	// pipeline.LoadNodes()
 	// pipeline.LoadEdges()
-	pipeline.ExtractInteractions()
+	// pipeline.ExtractInteractions()
+	pipeline.ExtractInteractionsV2(2)
 }
