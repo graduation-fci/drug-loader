@@ -25,7 +25,11 @@ func (d DrugRepository) InsetNode(name string) {
 	session := d.graph.NewSession(ctx, neo4j.SessionConfig{})
 	defer session.Close(ctx)
 	_, err := session.ExecuteWrite(ctx, func(tx neo4j.ManagedTransaction) (any, error) {
-		records, err := tx.Run(ctx, "CREATE (n:Drug {name: $name }) RETURN n.name", map[string]any{
+
+		//"CREATE (n:Drug {name: $name }) RETURN n.name"
+
+
+		records, err := tx.Run(ctx, "MERGE (n:Drug {name: $name }) RETURN n.name", map[string]any{
 			"name": name,
 		})
 		if err != nil {
@@ -52,7 +56,19 @@ func (d DrugRepository) BuildRelations(drug *model.Drug) {
 	defer session.Close(ctx)
 	for _, interaction := range drug.Interactions {
 		_, err := session.ExecuteWrite(ctx, func(tx neo4j.ManagedTransaction) (any, error) {
-			records, err := tx.Run(ctx, "MATCH (a:Drug {name: $src}) MATCH(b:Drug {name: $dest}) CREATE (a)-[rel:INTERACTS {consumerEffect: $consumerEffect, professionalEffect: $professionalEffect, hashedName: $hashedName, level: $level}]->(b) RETURN a.name", map[string]any{
+
+			// "MATCH (a:Drug {name: $src}) MATCH(b:Drug {name: $dest}) CREATE (a)-[rel:INTERACTS {consumerEffect: $consumerEffect, professionalEffect: $professionalEffect, hashedName: $hashedName, level: $level}]->(b) RETURN a.name"
+			
+
+			// "MATCH (a:Drug {name: $src})
+			// MATCH (b:Drug {name: $dest})
+			// MERGE (a)-[rel:INTERACTS {hashedName: $hashedName}]->(b)
+			// ON CREATE SET rel.consumerEffect = $consumerEffect, rel.professionalEffect = $professionalEffect, rel.level = $level
+			// ON MATCH SET rel.consumerEffect = $consumerEffect, rel.professionalEffect = $professionalEffect, rel.level = $level
+			// RETURN a.name"
+
+
+			records, err := tx.Run(ctx, "MATCH (a:Drug {name: $src}) MATCH (b:Drug {name: $dest}) MERGE (a)-[rel:INTERACTS {hashedName: $hashedName}]->(b) ON CREATE SET rel.consumerEffect = $consumerEffect, rel.professionalEffect = $professionalEffect, rel.level = $level RETURN a.name", map[string]any{
 				"src":                strings.ToLower(drug.Name),
 				"dest":               strings.ToLower(interaction.Name),
 				"hashedName":         interaction.HashedName,
